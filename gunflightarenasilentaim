@@ -1,0 +1,41 @@
+-- RunBullets
+-- TracerCalc
+-- Tracer
+-- Fire
+-- GetCameraLookVector
+local c_workspace = game:GetService("Workspace");
+local run_service = game:GetService("RunService");
+local vector2 = Vector2.new;
+local getinfo = debug.getinfo;
+local cframenew = CFrame.new;
+local camera = c_workspace.CurrentCamera;
+local closest_player = nil;
+local function get_closest_player()
+    local closest, distance = nil, math.huge;
+    for _, character in c_workspace:GetChildren() do
+        if (character and character:FindFirstChild("Head")) then
+            local w2s, onscreen = camera:WorldToViewportPoint(character.Head.Position);
+            if onscreen then
+                local dist = (vector2(w2s.X, w2s.Y) - vector2(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)).Magnitude;
+   
+                if dist < distance then
+                    closest = character;
+                    distance = dist;
+                end
+            end
+        end
+    end
+    return closest;
+end
+run_service.RenderStepped:Connect(function()
+    closest_player = get_closest_player();
+end)
+local old_index; old_index = hookmetamethod(game, "__index", function(self, index)
+    local func = getinfo(3, "n");
+    if func and func.name then
+        if (func.name == "Fire" and index == "CFrame") and (closest_player and closest_player:FindFirstChild("Head")) then
+            return cframenew(closest_player.Head.Position); -- gun fight arena vs the notorious cframe.new...
+        end
+    end
+    return old_index(self, index);
+end)
